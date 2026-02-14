@@ -58,7 +58,10 @@
       margin-top: 16px; font-size: 14px;
       opacity: 0.7; min-height: 20px;
     }
+    #vapi-support-btn { display: none !important; }
     .vapi-btn { display: none !important; }
+    [id^="vapi"] { display: none !important; }
+    button[data-vapi] { display: none !important; }
   </style>
 </head>
 <body>
@@ -81,25 +84,25 @@
     <p class="status" id="status"></p>
   </div>
 
-  <script
-    src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"
-    defer
-    async
-    onload="initVapi()"
-  ></script>
+  <script src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"></script>
   <script>
-    let vapi = null;
-    let isCallActive = false;
+    var vapi = null;
+    var isCallActive = false;
 
-    function initVapi() {
-      if (window.vapiSDK) {
+    function tryInit() {
+      if (window.vapiSDK && !vapi) {
         vapi = window.vapiSDK.run({
           apiKey: '491ca61c-7a79-4bd4-b283-8528110b2831',
           assistant: '2a3087a9-fb95-47a2-89cc-21f93c00943e',
           config: {
-            position: 'bottom-right',
-            idle: { color: 'rgba(0,0,0,0)', type: 'pill', title: '', subtitle: '' },
-            active: { color: 'rgba(0,0,0,0)', title: '', subtitle: '' }
+            position: 'bottom-left',
+            idle: {
+              color: 'rgba(0,0,0,0)',
+              type: 'pill',
+              title: '',
+              subtitle: '',
+              icon: ''
+            }
           }
         });
 
@@ -117,19 +120,22 @@
             isCallActive = false;
             document.getElementById('callBtn').classList.remove('active');
             document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
-            document.getElementById('btnIcon').textContent = '📞';
+            document.getElementById('btnIcon').textContent = String.fromCodePoint(0x1F4DE);
             document.getElementById('status').textContent = 'Gespraech beendet. Vielen Dank!';
           });
         }
       }
+      if (!vapi) {
+        setTimeout(tryInit, 500);
+      }
     }
 
+    tryInit();
+
     function toggleCall() {
-      if (!vapi && window.vapiSDK) {
-        initVapi();
-      }
       if (!vapi) {
-        document.getElementById('status').textContent = 'Bitte Seite neu laden...';
+        document.getElementById('status').textContent = 'Wird initialisiert, bitte kurz warten...';
+        tryInit();
         return;
       }
 
@@ -138,17 +144,21 @@
         isCallActive = true;
         document.getElementById('callBtn').classList.add('active');
         document.getElementById('btnText').textContent = 'Gespraech beenden';
-        document.getElementById('btnIcon').textContent = '🔴';
+        document.getElementById('btnIcon').textContent = String.fromCodePoint(0x1F534);
         document.getElementById('status').textContent = 'Verbindung wird hergestellt...';
       } else {
         vapi.stop();
         isCallActive = false;
         document.getElementById('callBtn').classList.remove('active');
         document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
-        document.getElementById('btnIcon').textContent = '📞';
+        document.getElementById('btnIcon').textContent = String.fromCodePoint(0x1F4DE);
         document.getElementById('status').textContent = 'Gespraech beendet. Vielen Dank!';
       }
     }
   </script>
+</body>
+</html>`;
+
+return code;
 </body>
 </html>
