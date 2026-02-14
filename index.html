@@ -20,7 +20,7 @@
     }
     .container { max-width: 480px; width: 100%; }
     .logo { font-size: 48px; margin-bottom: 16px; }
-    h1 ; font-weight: 700; margin-bottom: 8px; }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
     .subtitle {
       font-size: 16px; opacity: 0.85;
       margin-bottom: 32px; line-height: 1.5;
@@ -50,9 +50,6 @@
       background: #e53e3e;
       animation: pulse 2s infinite;
     }
-    .call-btn:disabled {
-      opacity: 0.6; cursor: not-allowed; transform: none;
-    }
     @keyframes pulse {
       0%, 100% { box-shadow: 0 4px 20px rgba(229,62,62,0.4); }
       50% { box-shadow: 0 4px 30px rgba(229,62,62,0.7); }
@@ -61,82 +58,95 @@
       margin-top: 16px; font-size: 14px;
       opacity: 0.7; min-height: 20px;
     }
+    .vapi-btn { display: none !important; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">🎙️</div>
+    <div class="logo">🎙</div>
     <h1>Sarah</h1>
     <p class="subtitle">BigBen Consulting &middot; ePOINT Partner-Beratung</p>
 
     <div class="card">
-      <p>Erfahren Sie in einem kurzen Gespräch, wie Sie als Gastronom
-      mit ePOINT neue Gäste gewinnen und lebenslang an deren
-      Einkäufen mitverdienen können.</p>
+      <p>Erfahren Sie in einem kurzen Gespraech, wie Sie als Gastronom
+      mit ePOINT neue Gaeste gewinnen und lebenslang an deren
+      Einkaeufen mitverdienen koennen.</p>
     </div>
 
-    <button class="call-btn" id="callBtn" onclick="toggleCall()" disabled>
+    <button class="call-btn" id="callBtn" onclick="toggleCall()">
       <span id="btnIcon">📞</span>
-      <span id="btnText">Wird geladen...</span>
+      <span id="btnText">Mit Sarah sprechen</span>
     </button>
 
     <p class="status" id="status"></p>
   </div>
 
-  <script src="https://unpkg.com/@vapi-ai/web@latest/dist/vapi.umd.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"
+    defer
+    async
+    onload="initVapi()"
+  ></script>
   <script>
-    let vapiInstance = null;
+    let vapi = null;
     let isCallActive = false;
-    const ASSISTANT_ID = '2a3087a9-fb95-47a2-89cc-21f93c00943e';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      try {
-        const Vapi = window.Vapi && window.Vapi.default ? window.Vapi.default : window.Vapi;
-        vapiInstance = new Vapi491ca61c-7a79-4bd4-b283-8528110b2831;
-
-        vapiInstance.on('call-start', () => {
-          document.getElementById('status').textContent = 'Verbunden - Sarah hört zu...';
-        });
-        vapiInstance.on('speech-start', () => {
-          document.getElementById('status').textContent = 'Sarah spricht...';
-        });
-        vapiInstance.on('speech-end', () => {
-          document.getElementById('status').textContent = 'Sarah hört zu...';
-        });
-        vapiInstance.on('call-end', () => {
-          isCallActive = false;
-          document.getElementById('callBtn').classList.remove('active');
-          document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
-          document.getElementById('btnIcon').textContent = '📞';
-          document.getElementById('status').textContent = 'Gespräch beendet. Vielen Dank!';
-        });
-        vapiInstance.on('error', (e) => {
-          document.getElementById('status').textContent = 'Fehler: Bitte versuchen Sie es erneut.';
+    function initVapi() {
+      if (window.vapiSDK) {
+        vapi = window.vapiSDK.run({
+          apiKey: 491ca61c-7a79-4bd4-b283-8528110b2831,
+          assistant: '2a3087a9-fb95-47a2-89cc-21f93c00943e',
+          config: {
+            position: 'bottom-right',
+            idle: { color: 'rgba(0,0,0,0)', type: 'pill', title: '', subtitle: '' },
+            active: { color: 'rgba(0,0,0,0)', title: '', subtitle: '' }
+          }
         });
 
-        document.getElementById('callBtn').disabled = false;
-        document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
-      } catch (e) {
-        document.getElementById('status').textContent = 'Laden fehlgeschlagen. Bitte Seite neu laden.';
+        if (vapi) {
+          vapi.on('call-start', function() {
+            document.getElementById('status').textContent = 'Verbunden - Sarah hoert zu...';
+          });
+          vapi.on('speech-start', function() {
+            document.getElementById('status').textContent = 'Sarah spricht...';
+          });
+          vapi.on('speech-end', function() {
+            document.getElementById('status').textContent = 'Sarah hoert zu...';
+          });
+          vapi.on('call-end', function() {
+            isCallActive = false;
+            document.getElementById('callBtn').classList.remove('active');
+            document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
+            document.getElementById('btnIcon').textContent = '📞';
+            document.getElementById('status').textContent = 'Gespraech beendet. Vielen Dank!';
+          });
+        }
       }
-    });
+    }
 
     function toggleCall() {
-      if (!vapiInstance) return;
+      if (!vapi && window.vapiSDK) {
+        initVapi();
+      }
+      if (!vapi) {
+        document.getElementById('status').textContent = 'Bitte Seite neu laden...';
+        return;
+      }
+
       if (!isCallActive) {
-        vapiInstance.start(ASSISTANT_ID);
+        vapi.start();
         isCallActive = true;
         document.getElementById('callBtn').classList.add('active');
-        document.getElementById('btnText').textContent = 'Gespräch beenden';
+        document.getElementById('btnText').textContent = 'Gespraech beenden';
         document.getElementById('btnIcon').textContent = '🔴';
         document.getElementById('status').textContent = 'Verbindung wird hergestellt...';
       } else {
-        vapiInstance.stop();
+        vapi.stop();
         isCallActive = false;
         document.getElementById('callBtn').classList.remove('active');
         document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
         document.getElementById('btnIcon').textContent = '📞';
-        document.getElementById('status').textContent = 'Gespräch beendet. Vielen Dank!';
+        document.getElementById('status').textContent = 'Gespraech beendet. Vielen Dank!';
       }
     }
   </script>
