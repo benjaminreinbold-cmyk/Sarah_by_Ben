@@ -50,6 +50,9 @@
       background: #e53e3e;
       animation: pulse 2s infinite;
     }
+    .call-btn:disabled {
+      opacity: 0.6; cursor: not-allowed; transform: none;
+    }
     @keyframes pulse {
       0%, 100% { box-shadow: 0 4px 20px rgba(229,62,62,0.4); }
       50% { box-shadow: 0 4px 30px rgba(229,62,62,0.7); }
@@ -58,8 +61,6 @@
       margin-top: 16px; font-size: 14px;
       opacity: 0.7; min-height: 20px;
     }
-    .footer { margin-top: 32px; font-size: 13px; opacity: 0.5; }
-    .footer a { color: white; }
   </style>
 </head>
 <body>
@@ -74,48 +75,68 @@
       Einkäufen mitverdienen können.</p>
     </div>
 
-    <button class="call-btn" id="callBtn" onclick="toggleCall()">
+    <button class="call-btn" id="callBtn" onclick="toggleCall()" disabled>
       <span id="btnIcon">📞</span>
-      <span id="btnText">Mit Sarah sprechen</span>
+      <span id="btnText">Wird geladen...</span>
     </button>
 
     <p class="status" id="status"></p>
-
-    <p class="footer">
-      Powered by <a href="https://e-point.app" target="_blank">ePOINT</a>
-    </p>
   </div>
 
-  <script
-    src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"
-    defer async></script>
+  <script src="https://unpkg.com/@vapi-ai/web@latest/dist/vapi.umd.js"></script>
   <script>
+    let vapiInstance = null;
     let isCallActive = false;
+    const ASSISTANT_ID = '2a3087a9-fb95-47a2-89cc-21f93c00943e';
 
-    window.addEventListener('load', () => {
-      window.vapiInstance = new window.Vapi(491ca61c-7a79-4bd4-b283-8528110b2831);
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const Vapi = window.Vapi && window.Vapi.default ? window.Vapi.default : window.Vapi;
+        vapiInstance = new Vapi(491ca61c-7a79-4bd4-b283-8528110b2831);
+
+        vapiInstance.on('call-start', () => {
+          document.getElementById('status').textContent = 'Verbunden - Sarah hört zu...';
+        });
+        vapiInstance.on('speech-start', () => {
+          document.getElementById('status').textContent = 'Sarah spricht...';
+        });
+        vapiInstance.on('speech-end', () => {
+          document.getElementById('status').textContent = 'Sarah hört zu...';
+        });
+        vapiInstance.on('call-end', () => {
+          isCallActive = false;
+          document.getElementById('callBtn').classList.remove('active');
+          document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
+          document.getElementById('btnIcon').textContent = '📞';
+          document.getElementById('status').textContent = 'Gespräch beendet. Vielen Dank!';
+        });
+        vapiInstance.on('error', (e) => {
+          document.getElementById('status').textContent = 'Fehler: Bitte versuchen Sie es erneut.';
+        });
+
+        document.getElementById('callBtn').disabled = false;
+        document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
+      } catch (e) {
+        document.getElementById('status').textContent = 'Laden fehlgeschlagen. Bitte Seite neu laden.';
+      }
     });
 
     function toggleCall() {
-      const btn = document.getElementById('callBtn');
-      const btnText = document.getElementById('btnText');
-      const btnIcon = document.getElementById('btnIcon');
-      const status = document.getElementById('status');
-
+      if (!vapiInstance) return;
       if (!isCallActive) {
-        window.vapiInstance.start('2a3087a9-fb95-47a2-89cc-21f93c00943e');
+        vapiInstance.start(ASSISTANT_ID);
         isCallActive = true;
-        btn.classList.add('active');
-        btnText.textContent = 'Gespräch beenden';
-        btnIcon.textContent = '🔴';
-        status.textContent = 'Verbindung wird hergestellt...';
+        document.getElementById('callBtn').classList.add('active');
+        document.getElementById('btnText').textContent = 'Gespräch beenden';
+        document.getElementById('btnIcon').textContent = '🔴';
+        document.getElementById('status').textContent = 'Verbindung wird hergestellt...';
       } else {
-        window.vapiInstance.stop();
+        vapiInstance.stop();
         isCallActive = false;
-        btn.classList.remove('active');
-        btnText.textContent = 'Mit Sarah sprechen';
-        btnIcon.textContent = '📞';
-        status.textContent = 'Gespräch beendet. Vielen Dank!';
+        document.getElementById('callBtn').classList.remove('active');
+        document.getElementById('btnText').textContent = 'Mit Sarah sprechen';
+        document.getElementById('btnIcon').textContent = '📞';
+        document.getElementById('status').textContent = 'Gespräch beendet. Vielen Dank!';
       }
     }
   </script>
